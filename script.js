@@ -213,44 +213,22 @@ function buildExhibitions(items) {
 }
 
 function buildPortfolio() {
-  const items = [
-    {
-      title: 'GAZE｜算法凝视与人机关系',
-      period: '2024—2025',
-      description: '以互动雕塑呈现算法推荐与数据监视中的“被看见”状态，讨论技术反馈如何影响身体感知、行为选择与个体主体性。',
-      materials: 'TouchDesigner · Python · OpenCV · 传感器阵列 · LED 动态反馈',
-      video: './assets/gaze.mp4',
-    },
-    {
-      title: 'You and Me｜爱与亲密关系',
-      period: '2023',
-      description: '从东方线条、留白与瓷器轮廓出发，将亲密关系中的依存与独立转译为具有光影变化的雕塑语言。',
-      materials: '金色不锈钢 · 曲线造型 · 光影反射',
-    },
-    {
-      title: '植物与生命体的生长与演变',
-      period: '2023',
-      description: '观察植物结构中的扭曲、再生与生长，将自然生命力置于城市金属语境中，探索形态、色彩与空间传播之间的关系。',
-      materials: '亮色不锈钢 · 空间构成 · 动态光影',
-    },
-  ];
-
-  sectionMap.portfolioList.innerHTML = items.map((item) => `
+  sectionMap.portfolioList.innerHTML = `
     <article class="portfolio-item">
       <div class="portfolio-copy">
-        <div class="project-top"><strong>${item.title}</strong><span>${item.period}</span></div>
-        <p>${item.description}</p>
-        <p class="portfolio-materials">${item.materials}</p>
+        <div class="project-top"><strong>陶泊妍中文作品集</strong><span>PDF</span></div>
+        <p>收录个人创作、展览经历与作品图像，详细内容请下载完整作品集查看。</p>
+        <div class="portfolio-actions">
+          <a class="portfolio-download" href="./assets/作品集.pdf" download="陶泊妍-作品集.pdf">
+            <span>下载中文作品集 PDF</span>
+            <span aria-hidden="true">↓</span>
+          </a>
+        </div>
       </div>
-      ${item.video ? `<div class="portfolio-media" data-video-src="${item.video}"><div class="media-placeholder"><span>GAZE</span><small>视频加载中</small></div></div>` : ''}
+      <div class="portfolio-media" data-video-src="./assets/gaze.mp4">
+        <div class="media-placeholder"><span>GAZE</span><small>视频加载中</small></div>
+      </div>
     </article>
-  `).join('') + `
-    <div class="portfolio-actions">
-      <a class="portfolio-download" href="./assets/portfolio-cn.pdf" download="陶泊妍-艺术作品集.pdf">
-        <span>下载中文作品集 PDF</span>
-        <span aria-hidden="true">↓</span>
-      </a>
-    </div>
   `;
 
   sectionMap.portfolioList.querySelectorAll('[data-video-src]').forEach(async (media) => {
