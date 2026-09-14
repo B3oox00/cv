@@ -255,13 +255,18 @@ function buildPortfolio() {
 
   sectionMap.portfolioList.querySelectorAll('[data-video-src]').forEach(async (media) => {
     const source = media.dataset.videoSrc;
-    try {
-      const response = await fetch(source, { method: 'HEAD' });
-      if (!response.ok) throw new Error('video not found');
-      media.innerHTML = `<video controls preload="metadata" aria-label="GAZE 作品视频"><source src="${source}" type="video/mp4" />您的浏览器不支持视频播放。</video>`;
-    } catch {
-      media.innerHTML = '<div class="media-placeholder"><span>GAZE</span><small>视频文件待上传至 assets/gaze.mp4</small></div>';
-    }
+    const video = document.createElement('video');
+    video.controls = true;
+    video.preload = 'metadata';
+    video.setAttribute('aria-label', 'GAZE 作品视频');
+
+    const fallback = () => {
+      media.innerHTML = '<div class="media-placeholder"><span>GAZE</span><small>视频文件无法加载</small></div>';
+    };
+
+    video.addEventListener('error', fallback, { once: true });
+    video.innerHTML = `<source src="${source}" type="video/mp4" />您的浏览器不支持视频播放。`;
+    media.replaceChildren(video);
   });
 }
 
