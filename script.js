@@ -10,6 +10,7 @@ const sectionMap = {
   profilePanel: document.getElementById('profilePanel'),
   educationList: document.getElementById('educationList'),
   exhibitionGrid: document.getElementById('exhibitionGrid'),
+  portfolioList: document.getElementById('portfolioList'),
   awardsList: document.getElementById('awardsList'),
   internshipList: document.getElementById('internshipList'),
   researchList: document.getElementById('researchList'),
@@ -152,7 +153,10 @@ function parseExhibitions(lines) {
     }
 
     if (current && /创作者|作者/.test(line)) {
-      current.title = line.replace(/^(创作者|作者，?)\s*/, '').replace(/\s*——.*$/, '');
+      const stripped = line.replace(/^(创作者|作者)[，—–\s]*/u, '').trim();
+      const titleMatch = stripped.match(/《([^》]+)》/);
+      const fallback = stripped.split(/——|—/).filter(Boolean).pop() || stripped;
+      current.title = (titleMatch ? titleMatch[1] : fallback).replace(/[（(].*?[）)]$/, '').trim();
       current.tag = 'Exhibition';
       const periodMatch = line.match(/(\d{4}.*?\d{4}|\d{2}\/\d{4}-\d{2}\/\d{4})/);
       if (periodMatch) current.period = periodMatch[0];
@@ -184,6 +188,7 @@ function parseExhibitions(lines) {
     title: item.title || 'GAZE',
     tag: item.tag || 'Exhibition',
     period: item.period || '2024-2025',
+    summary: item.title === 'GAZE' ? '互动装置：算法反馈、观众行为与数字权力关系。' : '个人创作项目，详见艺术作品集。',
     details: item.details.length ? item.details.slice(0, 3) : ['创作与技术实验结合，聚焦算法、身体与空间感知。'],
   }));
 }
@@ -199,12 +204,65 @@ function buildExhibitions(items) {
             <p>${item.period}</p>
           </div>
           <ul>
-            ${item.details.map((detail) => `<li>${detail}</li>`).join('')}
+            <li>${item.summary || item.details[0] || '个人创作项目'}</li>
           </ul>
         </article>
       `
     )
     .join('');
+}
+
+function buildPortfolio() {
+  const items = [
+    {
+      title: 'GAZE｜算法凝视与人机关系',
+      period: '2024—2025',
+      description: '以互动雕塑呈现算法推荐与数据监视中的“被看见”状态，讨论技术反馈如何影响身体感知、行为选择与个体主体性。',
+      materials: 'TouchDesigner · Python · OpenCV · 传感器阵列 · LED 动态反馈',
+      video: './assets/gaze.mp4',
+    },
+    {
+      title: 'You and Me｜爱与亲密关系',
+      period: '2023',
+      description: '从东方线条、留白与瓷器轮廓出发，将亲密关系中的依存与独立转译为具有光影变化的雕塑语言。',
+      materials: '金色不锈钢 · 曲线造型 · 光影反射',
+    },
+    {
+      title: '植物与生命体的生长与演变',
+      period: '2023',
+      description: '观察植物结构中的扭曲、再生与生长，将自然生命力置于城市金属语境中，探索形态、色彩与空间传播之间的关系。',
+      materials: '亮色不锈钢 · 空间构成 · 动态光影',
+    },
+  ];
+
+  sectionMap.portfolioList.innerHTML = items.map((item) => `
+    <article class="portfolio-item">
+      <div class="portfolio-copy">
+        <div class="project-top"><strong>${item.title}</strong><span>${item.period}</span></div>
+        <p>${item.description}</p>
+        <p class="portfolio-materials">${item.materials}</p>
+      </div>
+      ${item.video ? `<div class="portfolio-media" data-video-src="${item.video}"><div class="media-placeholder"><span>GAZE</span><small>视频加载中</small></div></div>` : ''}
+    </article>
+  `).join('') + `
+    <div class="portfolio-actions">
+      <a class="portfolio-download" href="./assets/portfolio-cn.pdf" download="陶泊妍-艺术作品集.pdf">
+        <span>下载中文作品集 PDF</span>
+        <span aria-hidden="true">↓</span>
+      </a>
+    </div>
+  `;
+
+  sectionMap.portfolioList.querySelectorAll('[data-video-src]').forEach(async (media) => {
+    const source = media.dataset.videoSrc;
+    try {
+      const response = await fetch(source, { method: 'HEAD' });
+      if (!response.ok) throw new Error('video not found');
+      media.innerHTML = `<video controls preload="metadata" aria-label="GAZE 作品视频"><source src="${source}" type="video/mp4" />您的浏览器不支持视频播放。</video>`;
+    } catch {
+      media.innerHTML = '<div class="media-placeholder"><span>GAZE</span><small>视频文件待上传至 assets/gaze.mp4</small></div>';
+    }
+  });
 }
 
 function parseAwards(lines) {
@@ -214,17 +272,14 @@ function parseAwards(lines) {
 
   const items = [];
   relevant.forEach((line) => {
-    if (line && !line.startsWith('•') && !line.startsWith('◆') && !line.startsWith('-') && !/^\d{4}/.test(line)) {
-      return;
-    }
+    const normalized = line.replace(/^[•◆\-\s]+/, '').trim();
+    if (!normalized) return;
 
-    if (/\d{4}/.test(line)) {
-      const match = line.match(/^(.*?)(\d{4}.*)$/);
-      if (match) {
-        const title = match[1].trim();
-        const detail = match[2].trim();
-        items.push({ title: title || '奖项', detail });
-      }
+    if (normalized.includes('——') || /\d{4}/.test(normalized)) {
+      const match = normalized.match(/^(.*?)(?:——|—)(.*)$/);
+      const title = match ? match[1].trim() : '奖项';
+      const detail = match ? match[2].trim() : normalized;
+      items.push({ title: title || '奖项', detail: detail || normalized });
     }
   });
 
@@ -435,7 +490,7 @@ async function loadCv() {
 
     state.text = text;
     state.name = head.name;
-    state.role = 'Artist · Creative Technologist · Visual Practitioner';
+    state.role = '艺术家 · 创意技术实践者 · 视觉工作者';
     state.slogan = '以雕塑语言探讨人与机器、空间与记忆的关系。';
 
     document.getElementById('hero-name').textContent = state.name;
@@ -447,6 +502,7 @@ async function loadCv() {
     buildProfilePanel();
     buildEducation(parseEducation(lines));
     buildExhibitions(parseExhibitions(lines));
+    buildPortfolio();
     buildAwards(parseAwards(lines));
     buildExperience(parseExperience(lines));
     buildResearch();
@@ -459,6 +515,7 @@ async function loadCv() {
     buildProfilePanel();
     buildEducation(parseEducation(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...`))); 
     buildExhibitions(parseExhibitions(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...`)));
+    buildPortfolio();
     buildAwards(parseAwards(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...\n实习经历\n哈尔滨滨海景观雕塑艺术有限公司品牌传播部实习生\n◆ ...\n额外奖项\n人民艺术青年第三届艺术创作活动——优秀作品奖\n2025 年第七届香港当代设计大奖——铜奖\n南开大学滨海学院 2024 届毕业展——优秀奖`)));
     buildExperience(parseExperience(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...\n实习经历\n哈尔滨滨海景观雕塑艺术有限公司品牌传播部实习生\n◆ ...\n额外奖项\n人民艺术青年第三届艺术创作活动——优秀作品奖\n2025 年第七届香港当代设计大奖——铜奖\n南开大学滨海学院 2024 届毕业展——优秀奖`)));
     buildResearch();
