@@ -217,7 +217,7 @@ function buildPortfolio(items) {
     <article class="portfolio-item portfolio-card">
       <div class="portfolio-visual">
         <button class="portfolio-image-button" type="button" data-lightbox-index="${index}" aria-label="查看${item.titleCN}作品图片">
-          <img src="./${item.imagePath}" alt="${item.titleCN}（${item.titleEN}）" loading="lazy" />
+          <img src="${getPortfolioImageSource(item)}" alt="${item.titleCN}（${item.titleEN}）" loading="lazy" />
           <span class="portfolio-image-fallback">${item.titleCN}</span>
         </button>
         ${item.titleEN === 'Gaze' ? '<div class="portfolio-media" data-video-src="./assets/gaze.mp4"><div class="media-placeholder"><span>GAZE</span><small>视频加载中</small></div></div>' : ''}
@@ -259,6 +259,10 @@ function buildPortfolio(items) {
   });
 }
 
+function getPortfolioImageSource(item) {
+  return `./${item.imagePath.split('/').map((segment) => encodeURIComponent(segment)).join('/')}`;
+}
+
 function openPortfolioLightbox(items, index) {
   const item = items[index];
   let lightbox = document.getElementById('portfolioLightbox');
@@ -281,7 +285,7 @@ function openPortfolioLightbox(items, index) {
     });
   }
 
-  lightbox.querySelector('.lightbox-image').src = `./${item.imagePath}`;
+  lightbox.querySelector('.lightbox-image').src = getPortfolioImageSource(item);
   lightbox.querySelector('.lightbox-image').alt = `${item.titleCN}（${item.titleEN}）`;
   lightbox.querySelector('.lightbox-caption').textContent = `${item.titleCN} / ${item.titleEN}`;
   lightbox.classList.add('is-open');
@@ -504,7 +508,7 @@ async function loadCv() {
   try {
     const [cvResponse, portfolioResponse] = await Promise.all([
       fetch('./cv.md'),
-      fetch('./data/portfolioData.json'),
+      fetch(`./data/portfolioData.json?v=${Date.now()}`, { cache: 'no-store' }),
     ]);
     if (!cvResponse.ok || !portfolioResponse.ok) {
       throw new Error('cv.md not found');
@@ -541,7 +545,44 @@ async function loadCv() {
     buildProfilePanel();
     buildEducation(parseEducation(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...`))); 
     buildExhibitions(parseExhibitions(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...`)));
-    buildPortfolio([]);
+    buildPortfolio([
+      {
+        titleCN: '凝视',
+        titleEN: 'Gaze',
+        year: '2024',
+        mediumCN: '跨媒介创作',
+        mediumEN: 'Cross-media Work',
+        descCN: '作品数据暂时无法读取，请刷新页面后重试。',
+        imagePath: 'assets/gaze.jpg',
+      },
+      {
+        titleCN: '蜕变',
+        titleEN: 'Metamorphosis',
+        year: '2024',
+        mediumCN: '彩色不锈钢雕塑，户外装置',
+        mediumEN: 'Colored Stainless-steel Sculpture, Outdoor Installation',
+        descCN: '作品数据暂时无法读取，请刷新页面后重试。',
+        imagePath: 'assets/metamorphosis.jpg',
+      },
+      {
+        titleCN: '你与我',
+        titleEN: 'You and Me',
+        year: '2024',
+        mediumCN: '金色不锈钢雕塑',
+        mediumEN: 'Golden Stainless-steel Sculpture',
+        descCN: '作品数据暂时无法读取，请刷新页面后重试。',
+        imagePath: 'assets/you and me.jpg',
+      },
+      {
+        titleCN: '云境',
+        titleEN: 'Cloud Realm',
+        year: '2024',
+        mediumCN: '镜面不锈钢雕塑',
+        mediumEN: 'Mirror-finished Stainless-steel Sculpture',
+        descCN: '作品数据暂时无法读取，请刷新页面后重试。',
+        imagePath: 'assets/cloudrealm.jpg',
+      },
+    ]);
     buildAwards(parseAwards(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...\n实习经历\n哈尔滨滨海景观雕塑艺术有限公司品牌传播部实习生\n◆ ...\n额外奖项\n人民艺术青年第三届艺术创作活动——优秀作品奖\n2025 年第七届香港当代设计大奖——铜奖\n南开大学滨海学院 2024 届毕业展——优秀奖`)));
     buildExperience(parseExperience(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...\n实习经历\n哈尔滨滨海景观雕塑艺术有限公司品牌传播部实习生\n◆ ...\n额外奖项\n人民艺术青年第三届艺术创作活动——优秀作品奖\n2025 年第七届香港当代设计大奖——铜奖\n南开大学滨海学院 2024 届毕业展——优秀奖`)));
     buildResearch();
