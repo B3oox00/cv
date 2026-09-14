@@ -1,7 +1,7 @@
 const state = {
   text: '',
   name: '陶泊妍',
-  role: 'Artist · Creative Technologist · Visual Practitioner',
+  role: '艺术家 · 创意技术实践者 · 视觉工作者',
   slogan: '以雕塑语言探讨人与机器、空间与记忆的关系。',
 };
 
@@ -45,10 +45,10 @@ function parseNameAndContact(lines) {
 
 function buildInfoCards(data) {
   const items = [
-    { title: 'Phone', value: data.phone },
-    { title: 'Email', value: data.email },
-    { title: 'Location', value: data.address },
-    { title: 'Focus', value: 'Sculpture / Installation / Visual Communication' },
+    { title: '电话', value: data.phone },
+    { title: '邮箱', value: data.email },
+    { title: '地址', value: data.address },
+    { title: '方向', value: '雕塑 / 装置 / 视觉传播' },
   ];
 
   sectionMap.basicInfo.innerHTML = items
@@ -71,9 +71,9 @@ function buildProfilePanel() {
   ];
 
   const bullets = [
-    'Interactive installation design',
-    'Algorithmic culture & digital agency',
-    'Public art & audience experience',
+    '交互装置设计',
+    '算法文化与数字权力',
+    '公共艺术与受众体验',
   ];
 
   sectionMap.profilePanel.innerHTML = `
@@ -223,7 +223,7 @@ function parseAwards(lines) {
       if (match) {
         const title = match[1].trim();
         const detail = match[2].trim();
-        items.push({ title: title || 'Award', detail });
+        items.push({ title: title || '奖项', detail });
       }
     }
   });
@@ -242,7 +242,7 @@ function buildAwards(items) {
     .map(
       (item) => `
         <article class="award-card">
-          <span class="award-rank">Recognition</span>
+          <span class="award-rank">荣誉</span>
           <h3>${item.title}</h3>
           <p>${item.detail}</p>
         </article>
@@ -346,20 +346,20 @@ function buildResearch() {
 function buildSkills() {
   const categories = [
     {
-      title: 'Digital Art / Design',
-      items: ['TouchDesigner', 'OpenCV', 'Python', 'Generative Visuals'],
+      title: '数字艺术 / 设计',
+      items: ['TouchDesigner', 'OpenCV', 'Python', '生成式视觉'],
     },
     {
-      title: 'Sculpture',
-      items: ['Material studies', 'Spatial composition', 'Light & shadow', 'Public art'],
+      title: '雕塑',
+      items: ['材料研究', '空间构成', '光影关系', '公共艺术'],
     },
     {
-      title: 'Media & Communication',
-      items: ['Brand storytelling', 'Short video', 'WeChat / Douyin', 'Urban cultural campaigns'],
+      title: '传播与媒介',
+      items: ['品牌叙事', '短视频', '微信 / 抖音', '城市文化活动'],
     },
     {
-      title: 'Research & Practice',
-      items: ['Curation', 'Art criticism', 'Audience research', 'Concept development'],
+      title: '研究与实践',
+      items: ['策展', '艺术评论', '受众研究', '概念开发'],
     },
   ];
 
@@ -381,7 +381,7 @@ function setDynamicDetails() {
   const now = new Date();
   const year = now.getFullYear();
   document.getElementById('yearLabel').textContent = year;
-  document.getElementById('lastUpdated').textContent = `Updated ${now.toISOString().slice(0, 10)}`;
+  document.getElementById('lastUpdated').textContent = `更新于 ${now.toISOString().slice(0, 10)}`;
 }
 
 function applyTheme() {
@@ -441,7 +441,7 @@ async function loadCv() {
     document.getElementById('hero-name').textContent = state.name;
     document.getElementById('hero-role').textContent = state.role;
     document.getElementById('hero-slogan').textContent = state.slogan;
-    document.getElementById('portrait-identity').textContent = 'Sculpture / Media Art / Visual Communication';
+    document.getElementById('portrait-identity').textContent = '雕塑 / 媒体艺术 / 视觉传播';
 
     buildInfoCards(head);
     buildProfilePanel();
@@ -453,7 +453,7 @@ async function loadCv() {
     buildSkills();
   } catch (error) {
     document.getElementById('hero-name').textContent = '陶泊妍';
-    document.getElementById('hero-role').textContent = 'Artist · Creative Technologist · Visual Practitioner';
+    document.getElementById('hero-role').textContent = '艺术家 · 创意技术实践者 · 视觉工作者';
     document.getElementById('hero-slogan').textContent = '以雕塑语言探讨人与机器、空间与记忆的关系。';
     buildInfoCards({ phone: '+86-135-5554-1343', email: '1243217647@qq.com', address: '中国黑龙江省大庆市龙凤区（邮编：163710）' });
     buildProfilePanel();
