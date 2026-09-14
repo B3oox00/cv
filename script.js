@@ -32,7 +32,7 @@ function parseNameAndContact(lines) {
   const name = lines.find((line) => /^#\s*/.test(line))?.replace(/^#\s*/, '') || '陶泊妍';
   const cleanName = lines.find((line) => !/^#/.test(line) && !line.startsWith('电话') && !line.startsWith('邮箱') && !line.startsWith('地址') && !line.includes('教育背景') && !line.includes('展览与竞赛') && !line.includes('实习经历') && !line.includes('额外奖项')) || '陶泊妍';
 
-  const phone = lines.find((line) => line.includes('电话'))?.replace(/.*电话：?/, '') || '+86-135-5554-1343';
+  const phone = lines.find((line) => line.includes('电话'))?.match(/\+?\d[\d\s-]{8,}/)?.[0].trim() || '+86-135-5554-1343';
   const email = lines.find((line) => line.includes('邮箱'))?.replace(/.*邮箱：?/, '') || '1243217647@qq.com';
   const address = lines.find((line) => line.includes('地址'))?.replace(/.*地址：?/, '') || '中国黑龙江省大庆市龙凤区（邮编：163710）';
 
@@ -212,40 +212,79 @@ function buildExhibitions(items) {
     .join('');
 }
 
-function buildPortfolio() {
-  sectionMap.portfolioList.innerHTML = `
-    <article class="portfolio-item">
-      <div class="portfolio-copy">
-        <div class="project-top"><strong>陶泊妍中文作品集</strong><span>PDF</span></div>
-        <p>收录个人创作、展览经历与作品图像，详细内容请下载完整作品集查看。</p>
-        <div class="portfolio-actions">
-          <a class="portfolio-download" href="./assets/作品集.pdf" download="陶泊妍-作品集.pdf">
-            <span>下载中文作品集 PDF</span>
-            <span aria-hidden="true">↓</span>
-          </a>
-        </div>
+function buildPortfolio(items) {
+  sectionMap.portfolioList.innerHTML = items.map((item, index) => `
+    <article class="portfolio-item portfolio-card">
+      <div class="portfolio-visual">
+        <button class="portfolio-image-button" type="button" data-lightbox-index="${index}" aria-label="查看${item.titleCN}作品图片">
+          <img src="./${item.imagePath}" alt="${item.titleCN}（${item.titleEN}）" loading="lazy" />
+          <span class="portfolio-image-fallback">${item.titleCN}</span>
+        </button>
+        ${item.titleEN === 'Gaze' ? '<div class="portfolio-media" data-video-src="./assets/gaze.mp4"><div class="media-placeholder"><span>GAZE</span><small>视频加载中</small></div></div>' : ''}
       </div>
-      <div class="portfolio-media" data-video-src="./assets/gaze.mp4">
-        <div class="media-placeholder"><span>GAZE</span><small>视频加载中</small></div>
+      <div class="portfolio-copy">
+        <div class="project-top"><strong>${item.titleCN}</strong><span>${item.titleEN} · ${item.year}</span></div>
+        <p class="portfolio-medium">${item.mediumCN}<span>${item.mediumEN}</span></p>
+        ${item.descCN.split('\n').map((paragraph) => `<p>${paragraph}</p>`).join('')}
       </div>
     </article>
+  `).join('') + `
+    <div class="portfolio-actions">
+      <a class="portfolio-download" href="./assets/作品集.pdf" download="陶泊妍-作品集.pdf">
+        <span>下载中文作品集 PDF</span>
+        <span aria-hidden="true">↓</span>
+      </a>
+    </div>
   `;
 
-  sectionMap.portfolioList.querySelectorAll('[data-video-src]').forEach(async (media) => {
+  sectionMap.portfolioList.querySelectorAll('.portfolio-image-button').forEach((button) => {
+    button.addEventListener('click', () => openPortfolioLightbox(items, Number(button.dataset.lightboxIndex)));
+  });
+
+  sectionMap.portfolioList.querySelectorAll('.portfolio-image-button img').forEach((image) => {
+    image.addEventListener('error', () => image.closest('.portfolio-image-button').classList.add('image-missing'), { once: true });
+  });
+
+  sectionMap.portfolioList.querySelectorAll('[data-video-src]').forEach((media) => {
     const source = media.dataset.videoSrc;
     const video = document.createElement('video');
     video.controls = true;
     video.preload = 'metadata';
     video.setAttribute('aria-label', 'GAZE 作品视频');
-
-    const fallback = () => {
+    video.addEventListener('error', () => {
       media.innerHTML = '<div class="media-placeholder"><span>GAZE</span><small>视频文件无法加载</small></div>';
-    };
-
-    video.addEventListener('error', fallback, { once: true });
+    }, { once: true });
     video.innerHTML = `<source src="${source}" type="video/mp4" />您的浏览器不支持视频播放。`;
     media.replaceChildren(video);
   });
+}
+
+function openPortfolioLightbox(items, index) {
+  const item = items[index];
+  let lightbox = document.getElementById('portfolioLightbox');
+
+  if (!lightbox) {
+    lightbox = document.createElement('div');
+    lightbox.id = 'portfolioLightbox';
+    lightbox.className = 'portfolio-lightbox';
+    lightbox.innerHTML = `
+      <div class="lightbox-backdrop" data-lightbox-close></div>
+      <div class="lightbox-dialog" role="dialog" aria-modal="true" aria-label="作品图片预览">
+        <button class="lightbox-close" type="button" aria-label="关闭图片预览" data-lightbox-close>×</button>
+        <img class="lightbox-image" alt="" />
+        <p class="lightbox-caption"></p>
+      </div>
+    `;
+    document.body.appendChild(lightbox);
+    lightbox.querySelectorAll('[data-lightbox-close]').forEach((button) => {
+      button.addEventListener('click', () => lightbox.classList.remove('is-open'));
+    });
+  }
+
+  lightbox.querySelector('.lightbox-image').src = `./${item.imagePath}`;
+  lightbox.querySelector('.lightbox-image').alt = `${item.titleCN}（${item.titleEN}）`;
+  lightbox.querySelector('.lightbox-caption').textContent = `${item.titleCN} / ${item.titleEN}`;
+  lightbox.classList.add('is-open');
 }
 
 function parseAwards(lines) {
@@ -463,11 +502,15 @@ function bindRevealAnimation() {
 
 async function loadCv() {
   try {
-    const response = await fetch('./cv.md');
-    if (!response.ok) {
+    const [cvResponse, portfolioResponse] = await Promise.all([
+      fetch('./cv.md'),
+      fetch('./data/portfolioData.json'),
+    ]);
+    if (!cvResponse.ok || !portfolioResponse.ok) {
       throw new Error('cv.md not found');
     }
-    const text = await response.text();
+    const text = await cvResponse.text();
+    const portfolioItems = await portfolioResponse.json();
     const lines = splitContent(text);
     const head = parseNameAndContact(lines);
 
@@ -485,7 +528,7 @@ async function loadCv() {
     buildProfilePanel();
     buildEducation(parseEducation(lines));
     buildExhibitions(parseExhibitions(lines));
-    buildPortfolio();
+    buildPortfolio(portfolioItems);
     buildAwards(parseAwards(lines));
     buildExperience(parseExperience(lines));
     buildResearch();
@@ -498,7 +541,7 @@ async function loadCv() {
     buildProfilePanel();
     buildEducation(parseEducation(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...`))); 
     buildExhibitions(parseExhibitions(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...`)));
-    buildPortfolio();
+    buildPortfolio([]);
     buildAwards(parseAwards(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...\n实习经历\n哈尔滨滨海景观雕塑艺术有限公司品牌传播部实习生\n◆ ...\n额外奖项\n人民艺术青年第三届艺术创作活动——优秀作品奖\n2025 年第七届香港当代设计大奖——铜奖\n南开大学滨海学院 2024 届毕业展——优秀奖`)));
     buildExperience(parseExperience(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...\n实习经历\n哈尔滨滨海景观雕塑艺术有限公司品牌传播部实习生\n◆ ...\n额外奖项\n人民艺术青年第三届艺术创作活动——优秀作品奖\n2025 年第七届香港当代设计大奖——铜奖\n南开大学滨海学院 2024 届毕业展——优秀奖`)));
     buildResearch();
