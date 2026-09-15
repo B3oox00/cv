@@ -9,7 +9,7 @@ const sectionMap = {
   basicInfo: document.getElementById('basicInfoGrid'),
   profilePanel: document.getElementById('profilePanel'),
   educationList: document.getElementById('educationList'),
-  exhibitionGrid: document.getElementById('exhibitionGrid'),
+  exhibitionExperienceList: document.getElementById('exhibitionExperienceList'),
   portfolioList: document.getElementById('portfolioList'),
   awardsList: document.getElementById('awardsList'),
   internshipList: document.getElementById('internshipList'),
@@ -390,23 +390,8 @@ function buildExperience(items) {
     .join('');
 }
 
-function buildResearch() {
-  const research = [
-    {
-      title: 'GAZE — 算法凝视与人机关系',
-      period: '2024 – 2025',
-      description: '围绕算法推荐机制与数据监视现象展开，构建交互装置来呈现观众行为在数字环境中的被感知与被反馈过程。',
-      points: ['使用 TouchDesigner 与 OpenCV 建立实时交互系统', '模拟算法凝视机制中的反馈、聚焦与偏好塑造', '完成作品阐述报告并参与学术论坛交流'],
-    },
-    {
-      title: 'You and Me — 爱与亲密关系',
-      period: '2023',
-      description: '探索跨文化语境下情感表达的共通性与多元性，并将东方线性美学转译为现代雕塑语言。',
-      points: ['融合不锈钢、瓷器轮廓与光影机制', '强调人与人之间依存与独立的辩证关系', '致力于建立多语境下的视觉表达方式'],
-    },
-  ];
-
-  sectionMap.researchList.innerHTML = research
+function buildExhibitionExperience(items) {
+  sectionMap.exhibitionExperienceList.innerHTML = items
     .map(
       (item) => `
         <article class="project-card">
@@ -414,10 +399,8 @@ function buildResearch() {
             <strong>${item.title}</strong>
             <span>${item.period}</span>
           </div>
-          <p>${item.description}</p>
-          <ul>
-            ${item.points.map((point) => `<li>${point}</li>`).join('')}
-          </ul>
+          <p>${item.event}</p>
+          <p>${item.summary}</p>
         </article>
       `
     )
@@ -506,15 +489,18 @@ function bindRevealAnimation() {
 
 async function loadCv() {
   try {
-    const [cvResponse, portfolioResponse] = await Promise.all([
+    const [cvResponse, portfolioResponse, heroResponse] = await Promise.all([
       fetch('./cv.md'),
       fetch(`./data/portfolioData.json?v=${Date.now()}`, { cache: 'no-store' }),
+      fetch(`./data/heroData.json?v=${Date.now()}`, { cache: 'no-store' }),
     ]);
-    if (!cvResponse.ok || !portfolioResponse.ok) {
+    if (!cvResponse.ok || !portfolioResponse.ok || !heroResponse.ok) {
       throw new Error('cv.md not found');
     }
     const text = await cvResponse.text();
-    const portfolioItems = await portfolioResponse.json();
+    const portfolioData = await portfolioResponse.json();
+    const heroData = await heroResponse.json();
+    const portfolioItems = portfolioData.works || portfolioData;
     const lines = splitContent(text);
     const head = parseNameAndContact(lines);
 
@@ -531,11 +517,10 @@ async function loadCv() {
     buildInfoCards(head);
     buildProfilePanel();
     buildEducation(parseEducation(lines));
-    buildExhibitions(parseExhibitions(lines));
     buildPortfolio(portfolioItems);
-    buildAwards(parseAwards(lines));
+    buildAwards(heroData.awards);
     buildExperience(parseExperience(lines));
-    buildResearch();
+    buildExhibitionExperience(heroData.exhibitions);
     buildSkills();
   } catch (error) {
     document.getElementById('hero-name').textContent = '陶泊妍';
@@ -585,7 +570,7 @@ async function loadCv() {
     ]);
     buildAwards(parseAwards(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...\n实习经历\n哈尔滨滨海景观雕塑艺术有限公司品牌传播部实习生\n◆ ...\n额外奖项\n人民艺术青年第三届艺术创作活动——优秀作品奖\n2025 年第七届香港当代设计大奖——铜奖\n南开大学滨海学院 2024 届毕业展——优秀奖`)));
     buildExperience(parseExperience(splitContent(`# cv\n陶泊妍\n电话：+86-135-5554-1343\n邮箱：1243217647@qq.com\n地址：中国黑龙江省大庆市龙凤区（邮编：163710）\n教育背景\n岭南大学 09/2026-06/2027\n• 商学院\n• 学位：艺术科技与商业理学硕士学位\n南开大学滨海学院 09/2020-06/2024\n• 艺术系\n• 学位：雕塑专业文学学士 | 平均绩点：77.8/100\n展览与竞赛\n创作者——2025 年 ART NOW 全球当代艺术与设计大赛——《GAZE》\n◆ ...\n实习经历\n哈尔滨滨海景观雕塑艺术有限公司品牌传播部实习生\n◆ ...\n额外奖项\n人民艺术青年第三届艺术创作活动——优秀作品奖\n2025 年第七届香港当代设计大奖——铜奖\n南开大学滨海学院 2024 届毕业展——优秀奖`)));
-    buildResearch();
+    buildExhibitionExperience([]);
     buildSkills();
     console.warn('Fallback content rendered because cv.md could not be loaded.');
   } finally {

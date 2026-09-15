@@ -1,4 +1,5 @@
-[
+{
+    "works": [
     {
         "titleCN": "凝视",
         "titleEN": "Gaze",
@@ -39,4 +40,5 @@
         "descEN": "I follow the clouds with my gaze, my soul wandering in the sky. Suddenly, an inexplicable confidence arises. I feel that these clouds are the truly eternal beings of the world. Even if they transform into rain and fall to the earth, they will be reborn again‑‑calm, unhurried, never chaotic, never scattered.",
         "imagePath": "assets/cloud-realm.jpg"
     }
-]
+      ]
+}
